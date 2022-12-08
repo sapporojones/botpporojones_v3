@@ -1,0 +1,15 @@
+[tool.poetry.scripts]
+botpporojones = 'botpporojones.__main__:main'# change me as needed
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "botpporojones_v3"
+version = "0.0.1"
+description = "In which I rewrite my discord bot to be useful and work like it should have."
+readme = "README.md"
+authors = [
+  "Sapporo Jones <sapporojones@gmail.com>"
+]
