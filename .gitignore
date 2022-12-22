@@ -51,5 +51,8 @@ MANIFEST
 # Per-project virtualenvs
 .venv*/
 .conda*/
-
+venv/
 .idea/
+
+# Env stuff
+.env
