@@ -1,24 +1,14 @@
 import datetime as dt
-import discord
 import praw
 import pytz
 import random
 import requests
 
-from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
 
-
 # initialize program components
 load_dotenv()
-
-
-# initialize discord components
-bot = commands.Bot(command_prefix="!")
-intents = discord.Intents.default()
-intents.message_content = True
-client = discord.Client(intents=intents)
 
 
 # load env vars
@@ -39,62 +29,55 @@ reddit = praw.Reddit(
     username=reddit_username,
 )
 
-
-###########################
-# Bot commands below here #
-###########################
+sarcasm_pre_text = "hello world!"
 
 
-@bot.command(
-    name="sarcasm",
-    help="Takes a string of text and converts it to sarcasm text",
-)
-async def sarcasm(ctx, pre_text):
+# sarcasm test
+def test_sarcasm():
+    sarcasm_pre_text = "hello world!"
     post_list = []
     i = 0
     end_text = ""
 
-    for l in pre_text:
+    for l in sarcasm_pre_text:
         chance = random.randint(1, 100)
         if chance >= 50:
-            post_list.append(pre_text[i].upper())
+            post_list.append(sarcasm_pre_text[i].upper())
         else:
-            post_list.append(pre_text[i].lower())
+            post_list.append(sarcasm_pre_text[i].lower())
         i += 1
 
     for l, x in enumerate(post_list):
         end_text = end_text + x
-    await ctx.send(end_text)
+
+    assert len(end_text) > 0
 
 
-@bot.command(name="d100", help="Roll the d100 to determine the fate of the alliance.")
-async def d100(ctx):
+def test_d100():
     roll = str(random.randint(1, 100))
     response = "You rolled a " + roll
-    await ctx.send(response)
+    assert int(roll) >= 1
 
 
-@bot.command(
-    name="d",
-    help="Roll the arbitrary sided die because you want to for some reason.",
-)
-async def d(ctx, en):
+def test_d():
+    en = 100
     roll = str(random.randint(1, int(en)))
     response = f"You rolled a {roll}"
-    await ctx.send(response)
+    assert int(roll)
+    assert int(roll) >= 1
 
 
-@bot.command(name="f", help="a fortune")
-async def f(ctx):
+def test_f():
     base_url = "http://yerkee.com/api/fortune"
     fortune_raw = requests.get(base_url)
     fortune_json = fortune_raw.json()
     fortune_text = fortune_json["fortune"]
-    await ctx.send(fortune_text)
+    assert len(fortune_text) > 0
+    assert fortune_raw.status_code == 200
 
 
-@bot.command(name="stock", help="stock quote lookup")
-async def stock(ctx, ticker):
+def test_stock():
+    ticker = 'INTC'
     query = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={stockmarket_key}"
     json_output = requests.get(query)
     data = json_output.json()
@@ -115,31 +98,31 @@ async def stock(ctx, ticker):
         + "The security closed last at: "
         + data["Global Quote"]["08. previous close"]
     )
-    await ctx.send(response)
+    assert len(response) > 0
+    assert json_output.status_code == 200
 
 
-@bot.command(name="r", help="returns a random image post from the specified subreddit")
-async def r(ctx, sub_reddit):
+def test_r():
+    sub_reddit = "subaru"
     random_submission = reddit.subreddit(sub_reddit).random()
     if random_submission.over_18 == True:
         submission_url = "Adult content detected, not posting"
     else:
         submission_url = reddit.submission(random_submission).url
-    await ctx.send(submission_url)
+    assert submission_url[:4] == 'http'
 
 
-@bot.command(name="rnew", help="returns a new image post from the specified subreddit")
-async def rnew(ctx, sub_reddit):
+def test_rnew():
+    sub_reddit = 'subaru'
     random_submission = reddit.subreddit(sub_reddit).new(limit=1)
     x = []
     for id in random_submission:
         x.append(id.url)
     y = x[0]
-    await ctx.send(y)
+    assert y[:4] == 'http'
 
 
-@bot.command(name="time", help="current time for a variety of timezones")
-async def time(ctx):
+def test_time():
     tz_london = pytz.timezone("Europe/London")
     tz_moscow = pytz.timezone("Europe/Moscow")
     tz_pac = pytz.timezone("America/Los_Angeles")
@@ -169,11 +152,11 @@ async def time(ctx):
 
     response = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9
 
-    await ctx.send(response)
+    assert str(pac_obj)[11:16][2] == ':'
 
 
-@bot.command(name="pilot", help="get various urls about a given pilot name")
-async def pilot(ctx, character_name):
+def test_pilot():
+    character_name = 'Sapporo Jones'
     data = f'["{character_name}"]'
     char_search = requests.post(
         "https://esi.evetech.net/latest/universe/ids/?datasource=tranquility&language=en",
@@ -183,7 +166,8 @@ async def pilot(ctx, character_name):
     if len(char_search_json) <= 0:
         response = "Character not found, verify spelling and try again."
     else:
-        char_id = char_search_json["character"][0]
+        # char_id = char_search_json["character"][0]
+        char_id = char_search_json["characters"][0]["id"]
 
         character_id = str(char_id)
         line1 = f"\n **PILOT SEARCH RESULTS:** \n"
@@ -193,11 +177,11 @@ async def pilot(ctx, character_name):
 
         response = line1 + line2 + line3 + line4
 
-    await ctx.send(response)
+    assert character_id == '772506501'
 
 
-@bot.command(name="corp", help="get various urls about a given eve corporation")
-async def corp(ctx, corp_name):
+def test_corp():
+    corp_name = 'The Subaru Legacy'
     data = f'["{corp_name}"]'
     corp_search = requests.post(
         "https://esi.evetech.net/latest/universe/ids/?datasource=tranquility&language=en",
@@ -207,7 +191,7 @@ async def corp(ctx, corp_name):
     if len(corp_search_json) <= 0:
         response = "Character not found"
     else:
-        corp_id = corp_search_json["corporation"][0]
+        corp_id = corp_search_json["corporations"][0]["id"]
 
         corp_id = str(corp_id)
         line1 = f"\n **PILOT SEARCH RESULTS:** \n"
@@ -217,11 +201,11 @@ async def corp(ctx, corp_name):
 
         response = line1 + line2 + line3 + line4
 
-    await ctx.send(response)
+    assert corp_id == '98440609'
 
 
-@bot.command(name="alice", help="get various urls about a given alliance")
-async def alice(ctx, alice_name):
+def test_alice():
+    alice_name = "Test Alliance Please Ignore"
     data = f'["{alice_name}"]'
     alice_search = requests.post(
         "https://esi.evetech.net/latest/universe/ids/?datasource=tranquility&language=en",
@@ -231,7 +215,7 @@ async def alice(ctx, alice_name):
     if len(alice_search_json) <= 0:
         response = "Character not found"
     else:
-        alice_id = alice_search_json["corporation"][0]
+        alice_id = alice_search_json["alliances"][0]["id"]
 
         alice_id = str(alice_id)
         line1 = f"\n **PILOT SEARCH RESULTS:** \n"
@@ -240,11 +224,4 @@ async def alice(ctx, alice_name):
         line4 = f"**DOTLAN:** http://evemaps.dotlan.net/alliance/{alice_id}/\n"
 
         response = line1 + line2 + line3 + line4
-
-    await ctx.send(response)
-
-
-#####################################
-# Nothing below here but client.run #
-#####################################
-client.run(discord_client_token)
+    assert alice_id == '498125261'
