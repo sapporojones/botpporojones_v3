@@ -244,6 +244,22 @@ async def alice(ctx, alice_name):
     await ctx.send(response)
 
 
+@bot.command(name='plex', help='fetch current plex prices')
+async def plex(ctx)
+    url = "https://esi.evetech.net/latest/markets/prices/?datasource=tranquility"
+    req_obj = requests.get(url)
+    req_j = req_obj.json()
+    plex_price = 0
+    for block in req_j:
+        if block['type_id'] == 44992:
+            plex_price = block['average_price']
+    fivehundo_plex = 500*plex_price
+    response = f"""
+    The average price for a single plex is {plex_price}.
+    The average price for 500 plex is {fivehundo_plex}.
+    """
+    await ctx.sent(response)
+
 #####################################
 # Nothing below here but client.run #
 #####################################
